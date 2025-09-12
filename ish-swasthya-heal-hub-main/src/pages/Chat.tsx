@@ -10,130 +10,83 @@ import {
 import { Card } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
 import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
-import { Send } from "lucide-react";
+import { Send, UploadCloud } from "lucide-react";
 
 const API_URL = "https://backkkkkkk-aqkn.onrender.com";
 
-const languages = [
-  { code: "en", name: "English", native: "English" },
-  { code: "hi", name: "Hindi", native: "हिंदी" },
-  { code: "bn", name: "Bengali", native: "বাংলা" },
-  { code: "ta", name: "Tamil", native: "தமிழ்" },
-  { code: "te", name: "Telugu", native: "తెలుగు" },
-  { code: "mr", name: "Marathi", native: "मराठी" },
-  { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
-  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
-  { code: "or", name: "Odia", native: "ଓଡ଼ିଆ" },  // <--- Added Odia
-];
-
-
 interface Message {
   id: string;
-  text: string;
-  type: "user" | "bot";
+  text?: string;
+  type: "user" | "bot" | "image";
   timestamp: Date;
+  imageUrl?: string;
 }
 
 const Chat = () => {
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
-  const [showLanguageModal, setShowLanguageModal] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-
-  // ---------------- Translation Helper ----------------
-  const translateText = async (text: string, targetLang: string) => {
-    try {
-      const response = await fetch(`${API_URL}/translate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, targetLang }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Translation failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.translatedText || text;
-    } catch (err) {
-      console.error("Translation error:", err);
-      return text; // fallback
-    }
-  };
-
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
-    setShowLanguageModal(false);
-
-    const welcomeMessage: Message = {
-      id: Date.now().toString(),
-      text: "Hello! I'm your health assistant. How can I help you today?",
-      type: "bot",
-      timestamp: new Date(),
-    };
-    setMessages([welcomeMessage]);
-  };
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() && !selectedFile) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputMessage,
-      type: "user",
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-    setInputMessage("");
-    setIsTyping(true);
-
-    try {
-      const response = await fetch(`${API_URL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: newMessage.text,
-          lang: selectedLanguage, // send user-selected language
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      let botReplyText =
-        data.reply?.parts?.[0]?.text?.trim() ||
-        "Sorry, I couldn't process your request.";
-
-      // Translate bot reply to selected language
-      if (selectedLanguage && selectedLanguage !== "en") {
-        botReplyText = await translateText(botReplyText, selectedLanguage);
-      }
-
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botReplyText,
-        type: "bot",
+    // Send text message
+    if (inputMessage.trim()) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        text: inputMessage,
+        type: "user",
         timestamp: new Date(),
       };
+      setMessages((prev) => [...prev, newMessage]);
+      setInputMessage("");
+    }
 
-      setMessages((prev) => [...prev, botResponse]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-
-      const errorResponse: Message = {
+    // Handle image upload
+    if (selectedFile) {
+      const imageMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I'm having trouble connecting to the server. Please try again later.",
-        type: "bot",
+        type: "image",
         timestamp: new Date(),
+        imageUrl: URL.createObjectURL(selectedFile),
       };
+      setMessages((prev) => [...prev, imageMessage]);
+      setSelectedFile(null);
 
-      setMessages((prev) => [...prev, errorResponse]);
-    } finally {
-      setIsTyping(false);
+      // Send image to backend
+      const formData = new FormData();
+      formData.append("image", selectedFile);
+
+      setIsTyping(true);
+      try {
+        const res = await fetch(`${API_URL}/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        const botResponse: Message = {
+          id: (Date.now() + 2).toString(),
+          text: data.reply || "Image received and processed.",
+          type: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } catch (err) {
+        console.error(err);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 3).toString(),
+            text: "Sorry, could not process the image.",
+            type: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setIsTyping(false);
+      }
     }
   };
 
@@ -142,46 +95,37 @@ const Chat = () => {
       <FloatingHealthIcons />
       <Navigation />
 
-      {/* Language Selection Modal */}
-      <Dialog open={showLanguageModal} onOpenChange={setShowLanguageModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">Choose Your Language</DialogTitle>
-          </DialogHeader>
-          <div className="language-grid">
-            {languages.map((lang) => (
-              <Button
-                key={lang.code}
-                variant="outline"
-                className="language-option flex flex-col p-4 h-auto"
-                onClick={() => handleLanguageSelect(lang.code)}
-              >
-                <span className="font-semibold">{lang.name}</span>
-                <span className="text-sm text-muted-foreground">{lang.native}</span>
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Chat Interface */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Health Assistant Chat</h1>
-          <p className="text-muted-foreground">Get instant answers to your health questions</p>
-        </div>
+        <h1 className="text-3xl font-bold text-primary mb-2">
+          Health Assistant Chat
+        </h1>
+        <p className="text-muted-foreground mb-4">
+          Ask about symptoms, upload images, or get health advice.
+        </p>
 
         {/* Chat Messages */}
         <Card className="mb-6 p-6 h-96 overflow-y-auto bg-card/80 backdrop-blur-sm">
           <div className="space-y-4">
-            {messages.map((message) => (
+            {messages.map((msg) => (
               <div
-                key={message.id}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                key={msg.id}
+                className={`flex ${
+                  msg.type === "user" ? "justify-end" : "justify-start"
+                }`}
               >
-                <div className={`chat-bubble ${message.type}`}>
-                  <p>{message.text}</p>
-                </div>
+                {msg.type === "image" ? (
+                  <div className="chat-bubble bot p-1">
+                    <img
+                      src={msg.imageUrl}
+                      alt="uploaded"
+                      className="max-w-xs max-h-64 rounded"
+                    />
+                  </div>
+                ) : (
+                  <div className={`chat-bubble ${msg.type}`}>
+                    <p>{msg.text}</p>
+                  </div>
+                )}
               </div>
             ))}
 
@@ -205,8 +149,8 @@ const Chat = () => {
           </div>
         </Card>
 
-        {/* Message Input */}
-        <div className="flex gap-2">
+        {/* Message Input & Image Upload */}
+        <div className="flex gap-2 items-center">
           <Input
             placeholder="Type your health question..."
             value={inputMessage}
@@ -214,57 +158,22 @@ const Chat = () => {
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             className="flex-1"
           />
-          <Button onClick={sendMessage} size="icon" className="shrink-0">
+          <label>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) setSelectedFile(e.target.files[0]);
+              }}
+            />
+            <Button size="icon">
+              <UploadCloud className="h-4 w-4" />
+            </Button>
+          </label>
+          <Button onClick={sendMessage} size="icon">
             <Send className="h-4 w-4" />
           </Button>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInputMessage("What are the COVID-19 symptoms?")}
-          >
-            COVID-19 Info
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInputMessage("When should I get vaccinated?")}
-          >
-            Vaccination Schedule
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setInputMessage("How to prevent dengue?")}
-          >
-            Disease Prevention
-          </Button>
-        </div>
-
-        {/* Emergency Numbers */}
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-2">🚨 Emergency Numbers</h2>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="destructive" size="sm" onClick={() => (window.location.href = "tel:108")}>
-              🚑 Ambulance (108)
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => (window.location.href = "tel:102")}>
-              🏥 Medical Helpline (102)
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => (window.location.href = "tel:104")}>
-              📞 Health Helpline (104)
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => (window.location.href = "tel:9439994859")}
-            >
-              🩺 Odisha Helpline (9439994859)
-            </Button>
-          </div>
         </div>
       </div>
     </div>
