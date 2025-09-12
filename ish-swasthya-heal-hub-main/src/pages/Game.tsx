@@ -1,67 +1,81 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-const quizData = [
-  {
-    question: "How often should you wash your hands?",
-    options: ["Once a day", "Before meals", "Never", "After using bathroom"],
-    correct: "Before meals",
-    points: 10,
-  },
-  {
-    question: "Which is the safest way to prevent dengue?",
-    options: ["Use mosquito nets", "Drink cold water", "Take antibiotics", "No precautions needed"],
-    correct: "Use mosquito nets",
-    points: 10,
-  },
-];
+const API_URL = "https://backkkkkkk-aqkn.onrender.com"; // Your backend
 
-const Game = () => {
+interface Quiz {
+  question: string;
+  options: string[];
+  correct: string;
+}
+
+const GameAI = () => {
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [selected, setSelected] = useState("");
   const [points, setPoints] = useState<number>(Number(localStorage.getItem("healthPoints") || 0));
-  const [currentQuiz, setCurrentQuiz] = useState<number>(0);
-  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem("healthPoints", points.toString());
-  }, [points]);
+  const fetchQuestion = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/generate-quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "health" })
+      });
+      const data = await res.json();
+      setQuiz(data); // data = {question, options, correct}
+    } catch (err) {
+      console.error(err);
+      alert("Error fetching question from AI.");
+    }
+    setLoading(false);
+  };
 
   const handleAnswer = () => {
-    if (!selectedOption) return;
-    if (selectedOption === quizData[currentQuiz].correct) {
-      alert(`Correct! You earned ${quizData[currentQuiz].points} points`);
-      setPoints(points + quizData[currentQuiz].points);
+    if (!quiz) return;
+
+    if (selected === quiz.correct) {
+      alert("Correct! 🎉 +10 points");
+      setPoints(prev => prev + 10);
+      localStorage.setItem("healthPoints", (points + 10).toString());
     } else {
-      alert(`Wrong! Correct answer: ${quizData[currentQuiz].correct}`);
+      alert(`Wrong! Correct answer: ${quiz.correct}`);
     }
-    setSelectedOption("");
-    setCurrentQuiz((prev) => (prev + 1) % quizData.length);
+
+    setSelected("");
+    fetchQuestion(); // Ask AI for next question
   };
 
   return (
     <div className="min-h-screen container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-4">Health Quiz</h1>
-      <p className="mb-4">Your Points: {points}</p>
+      <h1 className="text-4xl font-bold mb-6 text-center">💡 AI Health Quiz 💡</h1>
+      <p className="text-center mb-4">Points: {points}</p>
 
-      <Card className="p-4 mb-4">
-        <p className="font-semibold mb-2">{quizData[currentQuiz].question}</p>
-        <div className="flex flex-col gap-2">
-          {quizData[currentQuiz].options.map((opt) => (
-            <Button
-              key={opt}
-              variant={selectedOption === opt ? "default" : "outline"}
-              onClick={() => setSelectedOption(opt)}
-            >
-              {opt}
-            </Button>
-          ))}
-        </div>
-        <Button className="mt-4" onClick={handleAnswer}>
-          Submit Answer
-        </Button>
-      </Card>
+      {!quiz ? (
+        <Button onClick={fetchQuestion} className="w-full">Start Quiz</Button>
+      ) : (
+        <Card className="p-6 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-xl shadow-lg">
+          <p className="text-xl font-semibold mb-4">{quiz.question}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {quiz.options.map(opt => (
+              <Button
+                key={opt}
+                variant={selected === opt ? "default" : "outline"}
+                onClick={() => setSelected(opt)}
+              >
+                {opt}
+              </Button>
+            ))}
+          </div>
+          <Button className="mt-6 w-full" onClick={handleAnswer} disabled={!selected}>
+            Submit Answer
+          </Button>
+        </Card>
+      )}
     </div>
   );
 };
 
-export default Game;
+export default GameAI;
