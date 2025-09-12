@@ -16,7 +16,7 @@ const Game = () => {
 
   const fetchQuiz = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/ai-quiz?lang=en`);
+      const res = await axios.get(`${import.meta.env.NEXT_PUBLIC_API_URL}/ai-quiz?lang=en`);
       setQuiz(res.data.quiz);
       setSelectedOption(null);
       setFeedback("");
