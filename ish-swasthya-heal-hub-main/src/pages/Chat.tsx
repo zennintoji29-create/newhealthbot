@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Navigation } from "@/components/Navigation";
 import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
@@ -41,34 +35,18 @@ const Chat = () => {
       };
       setMessages((prev) => [...prev, newMessage]);
       setInputMessage("");
-    }
-
-    // Handle image upload
-    if (selectedFile) {
-      const imageMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "image",
-        timestamp: new Date(),
-        imageUrl: URL.createObjectURL(selectedFile),
-      };
-      setMessages((prev) => [...prev, imageMessage]);
-      setSelectedFile(null);
-
-      // Send image to backend
-      const formData = new FormData();
-      formData.append("image", selectedFile);
 
       setIsTyping(true);
       try {
-        const res = await fetch(`${API_URL}/upload`, {
+        const res = await fetch(`${API_URL}/chat`, {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: inputMessage, lang: "en" }),
         });
-
         const data = await res.json();
         const botResponse: Message = {
-          id: (Date.now() + 2).toString(),
-          text: data.reply || "Image received and processed.",
+          id: (Date.now() + 1).toString(),
+          text: data.reply?.parts?.[0]?.text || "I'm here to help.",
           type: "bot",
           timestamp: new Date(),
         };
@@ -78,8 +56,53 @@ const Chat = () => {
         setMessages((prev) => [
           ...prev,
           {
-            id: (Date.now() + 3).toString(),
-            text: "Sorry, could not process the image.",
+            id: (Date.now() + 2).toString(),
+            text: "Sorry, something went wrong.",
+            type: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setIsTyping(false);
+      }
+    }
+
+    // Handle image upload
+    if (selectedFile) {
+      const imageMessage: Message = {
+        id: (Date.now() + 3).toString(),
+        type: "image",
+        timestamp: new Date(),
+        imageUrl: URL.createObjectURL(selectedFile),
+      };
+      setMessages((prev) => [...prev, imageMessage]);
+
+      const formData = new FormData();
+      formData.append("image", selectedFile);
+
+      setSelectedFile(null);
+      setIsTyping(true);
+
+      try {
+        const res = await fetch(`${API_URL}/analyze-image`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        const botResponse: Message = {
+          id: (Date.now() + 4).toString(),
+          text: data.advice || "Image analyzed.",
+          type: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } catch (err) {
+        console.error(err);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 5).toString(),
+            text: "Failed to process the image.",
             type: "bot",
             timestamp: new Date(),
           },
