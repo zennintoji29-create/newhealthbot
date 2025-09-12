@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Navigation } from "@/components/Navigation";
 import { FloatingHealthIcons } from "@/components/FloatingHealthIcons";
+import { Navigation } from "@/components/Navigation";
 import { Send, UploadCloud } from "lucide-react";
 
 const API_URL = "https://backkkkkkk-aqkn.onrender.com";
@@ -21,6 +21,7 @@ const Chat = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState("en"); // <-- Language state
 
   const sendMessage = async () => {
     if (!inputMessage.trim() && !selectedFile) return;
@@ -41,12 +42,12 @@ const Chat = () => {
         const res = await fetch(`${API_URL}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: inputMessage, lang: "en" }),
+          body: JSON.stringify({ message: inputMessage, lang: selectedLanguage }),
         });
         const data = await res.json();
         const botResponse: Message = {
           id: (Date.now() + 1).toString(),
-          text: data.reply?.parts?.[0]?.text || "I'm here to help.",
+          text: data.reply?.parts?.[0]?.text || "Sorry, I couldn't process your request.",
           type: "bot",
           timestamp: new Date(),
         };
@@ -57,7 +58,7 @@ const Chat = () => {
           ...prev,
           {
             id: (Date.now() + 2).toString(),
-            text: "Sorry, something went wrong.",
+            text: "Error connecting to server.",
             type: "bot",
             timestamp: new Date(),
           },
@@ -76,13 +77,13 @@ const Chat = () => {
         imageUrl: URL.createObjectURL(selectedFile),
       };
       setMessages((prev) => [...prev, imageMessage]);
+      setSelectedFile(null);
 
       const formData = new FormData();
       formData.append("image", selectedFile);
+      formData.append("lang", selectedLanguage); // send language to backend for translation
 
-      setSelectedFile(null);
       setIsTyping(true);
-
       try {
         const res = await fetch(`${API_URL}/analyze-image`, {
           method: "POST",
@@ -91,7 +92,7 @@ const Chat = () => {
         const data = await res.json();
         const botResponse: Message = {
           id: (Date.now() + 4).toString(),
-          text: data.advice || "Image analyzed.",
+          text: data.advice || "Image processed successfully.",
           type: "bot",
           timestamp: new Date(),
         };
@@ -102,7 +103,7 @@ const Chat = () => {
           ...prev,
           {
             id: (Date.now() + 5).toString(),
-            text: "Failed to process the image.",
+            text: "Error processing the image.",
             type: "bot",
             timestamp: new Date(),
           },
@@ -119,12 +120,27 @@ const Chat = () => {
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-3xl font-bold text-primary mb-2">
-          Health Assistant Chat
-        </h1>
-        <p className="text-muted-foreground mb-4">
-          Ask about symptoms, upload images, or get health advice.
-        </p>
+        <h1 className="text-3xl font-bold mb-4">ISH Health Assistant</h1>
+
+        {/* Language Selector */}
+        <div className="mb-4">
+          <label className="mr-2 font-semibold">Language:</label>
+          <select
+            value={selectedLanguage}
+            onChange={(e) => setSelectedLanguage(e.target.value)}
+            className="border rounded px-2 py-1"
+          >
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="bn">Bengali</option>
+            <option value="ta">Tamil</option>
+            <option value="te">Telugu</option>
+            <option value="mr">Marathi</option>
+            <option value="gu">Gujarati</option>
+            <option value="kn">Kannada</option>
+            <option value="or">Odia</option>
+          </select>
+        </div>
 
         {/* Chat Messages */}
         <Card className="mb-6 p-6 h-96 overflow-y-auto bg-card/80 backdrop-blur-sm">
