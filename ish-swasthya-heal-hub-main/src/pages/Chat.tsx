@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -16,17 +16,59 @@ interface Message {
   imageUrl?: string;
 }
 
+const FAQS = [
+  "What vaccines should I take?",
+  "How can I prevent malaria?",
+  "Tips for healthy eating?",
+  "How often should I exercise?",
+  "How to improve hygiene habits?",
+];
+
+const BULLETINS = [
+  "💧 Drink at least 2 liters of water daily",
+  "🧼 Wash your hands before meals",
+  "🦟 Use mosquito nets at night",
+  "🥦 Eat a balanced diet for better immunity",
+];
+
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("en"); // <-- Language state
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [faqQuestions, setFaqQuestions] = useState<string[]>(() =>
+    FAQS.sort(() => 0.5 - Math.random()).slice(0, 3)
+  );
+  const [bulletinIndex, setBulletinIndex] = useState(0);
+
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Scroll to bottom on new message
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  // Rotate FAQ questions every 15s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFaqQuestions(FAQS.sort(() => 0.5 - Math.random()).slice(0, 3));
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Rotate bulletin every 5s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBulletinIndex((prev) => (prev + 1) % BULLETINS.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() && !selectedFile) return;
 
-    // Send text message
+    // User text message
     if (inputMessage.trim()) {
       const newMessage: Message = {
         id: Date.now().toString(),
@@ -77,12 +119,11 @@ const Chat = () => {
         imageUrl: URL.createObjectURL(selectedFile),
       };
       setMessages((prev) => [...prev, imageMessage]);
-      setSelectedFile(null);
-
       const formData = new FormData();
       formData.append("image", selectedFile);
-      formData.append("lang", selectedLanguage); // send language to backend for translation
+      formData.append("lang", selectedLanguage);
 
+      setSelectedFile(null);
       setIsTyping(true);
       try {
         const res = await fetch(`${API_URL}/analyze-image`, {
@@ -115,12 +156,26 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative bg-gray-50">
       <FloatingHealthIcons />
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-3xl font-bold mb-4">ISH Health Assistant</h1>
+
+        {/* Bulletin */}
+        <div className="mb-4 p-2 bg-blue-100 text-blue-800 rounded animate-pulse">
+          {BULLETINS[bulletinIndex]}
+        </div>
+
+        {/* FAQ Quick Questions */}
+        <div className="flex gap-2 mb-2 flex-wrap">
+          {faqQuestions.map((q, i) => (
+            <Button key={i} size="sm" onClick={() => setInputMessage(q)}>
+              {q}
+            </Button>
+          ))}
+        </div>
 
         {/* Language Selector */}
         <div className="mb-4">
@@ -148,9 +203,7 @@ const Chat = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${
-                  msg.type === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${msg.type === "user" ? "justify-end" : "justify-start"} transition-all duration-500`}
               >
                 {msg.type === "image" ? (
                   <div className="chat-bubble bot p-1">
@@ -161,30 +214,24 @@ const Chat = () => {
                     />
                   </div>
                 ) : (
-                  <div className={`chat-bubble ${msg.type}`}>
+                  <div className={`chat-bubble ${msg.type} p-2 rounded`}>
                     <p>{msg.text}</p>
                   </div>
                 )}
               </div>
             ))}
-
             {isTyping && (
               <div className="flex justify-start">
-                <div className="chat-bubble bot">
+                <div className="chat-bubble bot p-2">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"></div>
-                    <div
-                      className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"
-                      style={{ animationDelay: "0.4s" }}
-                    ></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: "0.2s" }}></div>
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: "0.4s" }}></div>
                   </div>
                 </div>
               </div>
             )}
+            <div ref={chatEndRef} />
           </div>
         </Card>
 
