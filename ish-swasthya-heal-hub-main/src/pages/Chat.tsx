@@ -23,7 +23,9 @@ const languages = [
   { code: "mr", name: "Marathi", native: "मराठी" },
   { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
   { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "or", name: "Odia", native: "ଓଡ଼ିଆ" },  // <--- Added Odia
 ];
+
 
 interface Message {
   id: string;
