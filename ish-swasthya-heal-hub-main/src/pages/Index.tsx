@@ -80,6 +80,12 @@ const Index = () => {
               <Button className="cta-glow" onClick={() => navigate('/chat')}>
                 Start Chat
               </Button>
+              <Button className="cta-glow" onClick={() => navigate('/myth')}>
+                Myth Buster
+              </Button>
+              <Button className="cta-glow" onClick={() => navigate('/game')}>
+                Health Quiz Game
+              </Button>
             </div>
           </div>
         </div>
@@ -108,24 +114,37 @@ const Index = () => {
           </Card>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
             <Button 
               onClick={() => navigate('/chat')} 
-              className="cta-glow text-xl px-10 py-6 text-white"
+              className="cta-glow text-xl px-12 py-6"
               size="lg"
             >
-              <MessageCircle className="w-6 h-6 mr-3" />
-              Start Health Chat
-              <ArrowRight className="w-5 h-5 ml-3" />
+              <Play className="w-6 h-6 mr-3" />
+              Begin Health Chat
             </Button>
             <Button 
-              onClick={() => navigate('/login')} 
-              variant="outline"
-              className="text-xl px-10 py-6 border-2 hover:bg-accent/50"
+              onClick={() => navigate('/myth')} 
+              className="cta-glow text-xl px-12 py-6"
               size="lg"
             >
-              <Users className="w-6 h-6 mr-3" />
-              Login & Save Chats
+              🧠 Myth Buster
+            </Button>
+            <Button 
+              onClick={() => navigate('/game')} 
+              className="cta-glow text-xl px-12 py-6"
+              size="lg"
+            >
+              🎮 Health Quiz Game
+            </Button>
+            <Button 
+              onClick={() => navigate('/about')} 
+              variant="outline"
+              className="text-xl px-12 py-6 border-2"
+              size="lg"
+            >
+              <Info className="w-6 h-6 mr-3" />
+              Learn More
             </Button>
           </div>
         </div>
@@ -223,34 +242,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="health-container py-20 text-center">
-        <h2 className="text-4xl font-bold mb-6">Ready to Start Your Health Journey?</h2>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of users who trust ISH for their healthcare guidance. 
-          Get personalized advice, track your health, and stay informed about wellness.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button 
-            onClick={() => navigate('/chat')} 
-            className="cta-glow text-xl px-12 py-6"
-            size="lg"
-          >
-            <Play className="w-6 h-6 mr-3" />
-            Begin Health Chat
-          </Button>
-          <Button 
-            onClick={() => navigate('/about')} 
-            variant="outline"
-            className="text-xl px-12 py-6 border-2"
-            size="lg"
-          >
-            <Info className="w-6 h-6 mr-3" />
-            Learn More
-          </Button>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-card border-t py-12">
         <div className="health-container">
@@ -261,9 +252,11 @@ const Index = () => {
               Committed to making healthcare accessible to every community in India. 
               Building bridges between technology and wellness for a healthier tomorrow.
             </p>
-            <div className="flex justify-center gap-6">
+            <div className="flex justify-center gap-6 flex-wrap">
               <Button variant="link" onClick={() => navigate('/about')}>About Us</Button>
               <Button variant="link" onClick={() => navigate('/chat')}>Health Chat</Button>
+              <Button variant="link" onClick={() => navigate('/myth')}>Myth Buster</Button>
+              <Button variant="link" onClick={() => navigate('/game')}>Health Quiz Game</Button>
               <Button variant="link" onClick={() => navigate('/login')}>Login</Button>
             </div>
             <div className="mt-8 pt-8 border-t text-sm text-muted-foreground">
