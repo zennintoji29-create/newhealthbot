@@ -17,6 +17,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState("en"); // global language state
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000);
@@ -32,11 +33,11 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/chat" element={<Chat />} />
+            <Route path="/" element={<Index selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} />} />
+            <Route path="/chat" element={<Chat selectedLanguage={selectedLanguage} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/about" element={<About />} />
-            <Route path="/myth" element={<MythBuster />} />
+            <Route path="/myth" element={<MythBuster selectedLanguage={selectedLanguage} />} />
             <Route path="/game" element={<Game />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
