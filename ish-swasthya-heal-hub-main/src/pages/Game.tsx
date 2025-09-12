@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 interface Quiz {
@@ -8,28 +8,39 @@ interface Quiz {
   points: number;
 }
 
-const Game: React.FC = () => {
+const Game = () => {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string>("");
 
   const fetchQuiz = async () => {
     setLoading(true);
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/ai-quiz`, {
-        params: { lang: "en", session_id: sessionId || undefined },
-      });
+    setFeedback(null);
+    setSelected(null);
 
-      setQuiz(response.data.quiz);
-      if (!sessionId) setSessionId(response.data.session_id); // Save session_id
-      setSelectedOption(null);
-      setFeedback(null);
+    try {
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/ai-quiz?lang=en`);
+      setQuiz(data.quiz);
     } catch (err) {
       console.error("Error fetching quiz:", err);
+      setQuiz({
+        question: "How often should you wash your hands?",
+        options: ["Once a day", "Before meals", "Never", "After using bathroom"],
+        correct: "Before meals",
+        points: 10
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAnswer = (option: string) => {
+    setSelected(option);
+    if (option === quiz?.correct) {
+      setFeedback("✅ Correct!");
+    } else {
+      setFeedback(`❌ Wrong! Correct answer: ${quiz?.correct}`);
     }
   };
 
@@ -37,55 +48,38 @@ const Game: React.FC = () => {
     fetchQuiz();
   }, []);
 
-  const handleOptionClick = (option: string) => {
-    setSelectedOption(option);
-    if (!quiz) return;
+  if (loading) return <div className="text-center mt-20 text-xl">Loading Quiz...</div>;
 
-    if (option === quiz.correct) {
-      setFeedback(`✅ Correct! +${quiz.points} points`);
-    } else {
-      setFeedback(`❌ Wrong! Correct answer: ${quiz.correct}`);
-    }
-  };
-
-  const handleNextQuestion = () => {
-    fetchQuiz(); // Fetch next question from backend
-  };
-
-  if (loading || !quiz) {
-    return <div className="text-center mt-10 text-xl">Loading question...</div>;
-  }
+  if (!quiz) return <div className="text-center mt-20 text-xl">No quiz available.</div>;
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white rounded shadow mt-10">
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold mb-4">{quiz.question}</h2>
-      <div className="flex flex-col gap-3">
-        {quiz.options.map((opt) => (
+      <div className="grid gap-3">
+        {quiz.options.map((option) => (
           <button
-            key={opt}
-            onClick={() => handleOptionClick(opt)}
-            className={`p-3 rounded border text-left ${
-              selectedOption === opt
-                ? opt === quiz.correct
+            key={option}
+            onClick={() => handleAnswer(option)}
+            disabled={!!selected}
+            className={`p-3 border rounded-lg text-left w-full hover:bg-gray-100 transition ${
+              selected
+                ? option === quiz.correct
                   ? "bg-green-200 border-green-400"
-                  : "bg-red-200 border-red-400"
-                : "bg-gray-100 border-gray-300 hover:bg-gray-200"
+                  : option === selected
+                  ? "bg-red-200 border-red-400"
+                  : ""
+                : "bg-gray-50"
             }`}
-            disabled={!!selectedOption}
           >
-            {opt}
+            {option}
           </button>
         ))}
       </div>
-
-      {feedback && (
-        <div className="mt-4 text-lg font-semibold">{feedback}</div>
-      )}
-
-      {selectedOption && (
+      {feedback && <p className="mt-4 font-semibold text-lg">{feedback}</p>}
+      {selected && (
         <button
-          onClick={handleNextQuestion}
-          className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={fetchQuiz}
+          className="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
           Next Question
         </button>
