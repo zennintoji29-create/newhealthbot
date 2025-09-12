@@ -14,8 +14,7 @@ interface Message {
 interface Props {
   selectedLanguage: string; // Pass from main chat or parent
 }
-
-export const MythBuster = ({ selectedLanguage }: Props) => {
+const MythBuster = ({ selectedLanguage }: Props) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -76,3 +75,5 @@ export const MythBuster = ({ selectedLanguage }: Props) => {
     </div>
   );
 };
+
+export default MythBuster;
