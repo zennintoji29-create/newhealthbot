@@ -1,7 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 
 const API_URL = "https://backkkkkkk-aqkn.onrender.com";
 
@@ -11,14 +8,13 @@ interface Message {
   type: "user" | "bot";
 }
 
- const HealthChat = () => {
+const HealthChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isTyping, setIsTyping] = useState(false);
 
-export default HealthChat;
   // ---------------- Send Text Message ----------------
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -34,10 +30,16 @@ export default HealthChat;
         body: JSON.stringify({ message: inputMessage, lang: selectedLanguage }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: data.reply.parts[0].text, type: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), text: data.reply.parts[0].text, type: "bot" },
+      ]);
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [...prev, { id: (Date.now() + 2).toString(), text: "Error connecting to server.", type: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 2).toString(), text: "Error connecting to server.", type: "bot" },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -48,6 +50,7 @@ export default HealthChat;
     const newMsg: Message = { id: Date.now().toString(), text: question, type: "user" };
     setMessages((prev) => [...prev, newMsg]);
     setIsTyping(true);
+
     try {
       const res = await fetch(`${API_URL}/mythbuster`, {
         method: "POST",
@@ -55,10 +58,16 @@ export default HealthChat;
         body: JSON.stringify({ question, lang: selectedLanguage }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: data.answer, type: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), text: data.answer, type: "bot" },
+      ]);
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [...prev, { id: (Date.now() + 2).toString(), text: "Error fetching myth-buster answer.", type: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 2).toString(), text: "Error fetching myth-buster answer.", type: "bot" },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -77,10 +86,16 @@ export default HealthChat;
     try {
       const res = await fetch(`${API_URL}/analyze-image`, { method: "POST", body: formData });
       const data = await res.json();
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: data.advice, type: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), text: data.advice, type: "bot" },
+      ]);
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [...prev, { id: (Date.now() + 2).toString(), text: "Error analyzing image.", type: "bot" }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 2).toString(), text: "Error analyzing image.", type: "bot" },
+      ]);
     } finally {
       setIsTyping(false);
       setImageFile(null);
@@ -88,10 +103,10 @@ export default HealthChat;
   };
 
   return (
-    <div className="min-h-screen container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-4">ISH Health Assistant</h1>
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+      <h1>ISH Health Assistant</h1>
 
-      <div className="mb-4">
+      <div style={{ marginBottom: 10 }}>
         <label>Language: </label>
         <select value={selectedLanguage} onChange={(e) => setSelectedLanguage(e.target.value)}>
           <option value="en">English</option>
@@ -103,42 +118,51 @@ export default HealthChat;
           <option value="gu">Gujarati</option>
           <option value="kn">Kannada</option>
           <option value="or">Odia</option>
-
         </select>
       </div>
 
-      <Card className="mb-4 p-4 h-96 overflow-y-auto bg-card/80 backdrop-blur-sm">
+      <div style={{ border: "1px solid #ccc", padding: 10, height: 300, overflowY: "auto", marginBottom: 10 }}>
         {messages.map((msg) => (
-          <div key={msg.id} className={`mb-2 ${msg.type === "user" ? "text-right" : "text-left"}`}>
-            <div className={`inline-block p-2 rounded-lg ${msg.type === "user" ? "bg-green-200" : "bg-white shadow"}`}>
+          <div key={msg.id} style={{ textAlign: msg.type === "user" ? "right" : "left", marginBottom: 5 }}>
+            <span
+              style={{
+                display: "inline-block",
+                padding: 5,
+                borderRadius: 5,
+                backgroundColor: msg.type === "user" ? "#a0f0a0" : "#f0f0f0",
+              }}
+            >
               {msg.text}
-            </div>
+            </span>
           </div>
         ))}
-        {isTyping && <p className="text-sm text-gray-500">Bot is typing...</p>}
-      </Card>
+        {isTyping && <p style={{ fontSize: 12, color: "#666" }}>Bot is typing...</p>}
+      </div>
 
-      <div className="flex gap-2 mb-2">
-        <Input
+      <div style={{ display: "flex", marginBottom: 10 }}>
+        <input
+          type="text"
           placeholder="Type your question..."
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          className="flex-1"
+          style={{ flex: 1, marginRight: 5 }}
         />
-        <Button onClick={sendMessage}>Send</Button>
+        <button onClick={sendMessage}>Send</button>
       </div>
 
-      <div className="flex gap-2 mb-2">
-        <Input type="file" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
-        <Button onClick={sendImage}>Analyze Image</Button>
+      <div style={{ display: "flex", marginBottom: 10 }}>
+        <input type="file" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+        <button onClick={sendImage}>Analyze Image</button>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        <Button onClick={() => sendMythQuestion("Is COVID-19 vaccine safe?")}>Myth: COVID Vaccine</Button>
-        <Button onClick={() => sendMythQuestion("Does drinking hot water kill coronavirus?")}>Myth: Hot Water</Button>
-        <Button onClick={() => sendMythQuestion("Do antibiotics prevent viral infections?")}>Myth: Antibiotics</Button>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        <button onClick={() => sendMythQuestion("Is COVID-19 vaccine safe?")}>Myth: COVID Vaccine</button>
+        <button onClick={() => sendMythQuestion("Does drinking hot water kill coronavirus?")}>Myth: Hot Water</button>
+        <button onClick={() => sendMythQuestion("Do antibiotics prevent viral infections?")}>Myth: Antibiotics</button>
       </div>
     </div>
   );
 };
+
+export default HealthChat;
