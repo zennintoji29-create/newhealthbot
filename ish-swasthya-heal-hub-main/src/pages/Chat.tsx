@@ -11,13 +11,14 @@ interface Message {
   type: "user" | "bot";
 }
 
-export const HealthChat = () => {
+ const HealthChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isTyping, setIsTyping] = useState(false);
 
+export default HealthChat;
   // ---------------- Send Text Message ----------------
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
