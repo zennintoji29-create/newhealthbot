@@ -16,8 +16,7 @@ const quizData = [
     points: 10,
   },
 ];
-
-export const GamePage = () => {
+const GamePage = () => {
   const [points, setPoints] = useState<number>(Number(localStorage.getItem("healthPoints") || 0));
   const [currentQuiz, setCurrentQuiz] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<string>("");
@@ -63,3 +62,5 @@ export const GamePage = () => {
     </div>
   );
 };
+
+export default GamePage;
