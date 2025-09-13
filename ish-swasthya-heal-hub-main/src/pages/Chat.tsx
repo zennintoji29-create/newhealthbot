@@ -42,6 +42,7 @@ const Chat = () => {
   const [bulletinIndex, setBulletinIndex] = useState(0);
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Scroll to bottom on new message
   useEffect(() => {
@@ -250,19 +251,22 @@ const Chat = () => {
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             className="flex-1"
           />
-          <label>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files?.[0]) handleImageUpload(e.target.files[0]);
-              }}
-            />
-            <Button size="icon">
-              <UploadCloud className="h-4 w-4" />
-            </Button>
-          </label>
+          {/* FIXED IMAGE UPLOAD BUTTON */}
+          <Button
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <UploadCloud className="h-4 w-4" />
+          </Button>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.[0]) handleImageUpload(e.target.files[0]);
+            }}
+          />
           <Button onClick={sendMessage} size="icon">
             <Send className="h-4 w-4" />
           </Button>
