@@ -35,7 +35,6 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [faqQuestions, setFaqQuestions] = useState<string[]>(() =>
     FAQS.sort(() => 0.5 - Math.random()).slice(0, 3)
@@ -66,92 +65,93 @@ const Chat = () => {
   }, []);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() && !selectedFile) return;
+    if (!inputMessage.trim()) return;
 
-    // User text message
-    if (inputMessage.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: inputMessage,
-        type: "user",
+    // Add user message
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputMessage,
+      type: "user",
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    setInputMessage("");
+
+    setIsTyping(true);
+    try {
+      const res = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: newMessage.text, lang: selectedLanguage }),
+      });
+      const data = await res.json();
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.reply?.parts?.[0]?.text || "Sorry, I couldn't process your request.",
+        type: "bot",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, newMessage]);
-      setInputMessage("");
-
-      setIsTyping(true);
-      try {
-        const res = await fetch(`${API_URL}/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: inputMessage, lang: selectedLanguage }),
-        });
-        const data = await res.json();
-        const botResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          text: data.reply?.parts?.[0]?.text || "Sorry, I couldn't process your request.",
+      setMessages((prev) => [...prev, botResponse]);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 2).toString(),
+          text: "Error connecting to server.",
           type: "bot",
           timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      } catch (err) {
-        console.error(err);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 2).toString(),
-            text: "Error connecting to server.",
-            type: "bot",
-            timestamp: new Date(),
-          },
-        ]);
-      } finally {
-        setIsTyping(false);
-      }
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
     }
+  };
 
-    // Handle image upload
-    if (selectedFile) {
-      const imageMessage: Message = {
-        id: (Date.now() + 3).toString(),
-        type: "image",
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+
+    // Show preview immediately
+    const imageMessage: Message = {
+      id: Date.now().toString(),
+      type: "image",
+      timestamp: new Date(),
+      imageUrl: URL.createObjectURL(file),
+    };
+    setMessages((prev) => [...prev, imageMessage]);
+
+    // Prepare upload
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("lang", selectedLanguage);
+
+    setIsTyping(true);
+    try {
+      const res = await fetch(`${API_URL}/analyze-image`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: data.advice || "Image processed successfully.",
+        type: "bot",
         timestamp: new Date(),
-        imageUrl: URL.createObjectURL(selectedFile),
       };
-      setMessages((prev) => [...prev, imageMessage]);
-      const formData = new FormData();
-      formData.append("image", selectedFile);
-      formData.append("lang", selectedLanguage);
-
-      setSelectedFile(null);
-      setIsTyping(true);
-      try {
-        const res = await fetch(`${API_URL}/analyze-image`, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        const botResponse: Message = {
-          id: (Date.now() + 4).toString(),
-          text: data.advice || "Image processed successfully.",
+      setMessages((prev) => [...prev, botResponse]);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 2).toString(),
+          text: "Error processing the image.",
           type: "bot",
           timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      } catch (err) {
-        console.error(err);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 5).toString(),
-            text: "Error processing the image.",
-            type: "bot",
-            timestamp: new Date(),
-          },
-        ]);
-      } finally {
-        setIsTyping(false);
-      }
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -225,8 +225,14 @@ const Chat = () => {
                 <div className="chat-bubble bot p-2">
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: "0.2s" }}></div>
-                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse" style={{ animationDelay: "0.4s" }}></div>
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-pulse"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -235,7 +241,7 @@ const Chat = () => {
           </div>
         </Card>
 
-        {/* Message Input & Image Upload */}
+        {/* Input + Upload + Send */}
         <div className="flex gap-2 items-center">
           <Input
             placeholder="Type your health question..."
@@ -250,7 +256,7 @@ const Chat = () => {
               accept="image/*"
               className="hidden"
               onChange={(e) => {
-                if (e.target.files?.[0]) setSelectedFile(e.target.files[0]);
+                if (e.target.files?.[0]) handleImageUpload(e.target.files[0]);
               }}
             />
             <Button size="icon">
