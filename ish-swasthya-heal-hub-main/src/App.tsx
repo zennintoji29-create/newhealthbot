@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
+
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Login from "./pages/Login";
@@ -11,7 +13,7 @@ import MythBuster from "./pages/MythBuster";
 import Game from "./pages/Game";
 import NotFound from "./pages/NotFound";
 import LoadingScreen from "./components/LoadingScreen";
-import { useState, useEffect } from "react";
+import EmergencyNumbers from "./pages/EmergencyNumbers";
 
 const queryClient = new QueryClient();
 
@@ -33,12 +35,21 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} />} />
+            <Route
+              path="/"
+              element={
+                <Index
+                  selectedLanguage={selectedLanguage}
+                  setSelectedLanguage={setSelectedLanguage}
+                />
+              }
+            />
             <Route path="/chat" element={<Chat selectedLanguage={selectedLanguage} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/about" element={<About />} />
             <Route path="/myth" element={<MythBuster selectedLanguage={selectedLanguage} />} />
             <Route path="/game" element={<Game />} />
+            <Route path="/emergency" element={<EmergencyNumbers />} /> {/* ✅ Added */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
