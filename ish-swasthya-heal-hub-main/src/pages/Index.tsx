@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, Users, Info, Bell, ArrowRight, Play } from "lucide-react";
+import { MessageCircle, Users, Info, Bell, ArrowRight, Play, Phone } from "lucide-react";
 
 const healthTips = [
   "💧 Drink at least 8 glasses of clean water daily",
@@ -34,7 +34,6 @@ const Index = () => {
     const tipTimer = setInterval(() => {
       setCurrentTipIndex(prev => (prev + 1) % healthTips.length);
     }, 4000);
-
     return () => clearInterval(tipTimer);
   }, []);
 
@@ -85,6 +84,10 @@ const Index = () => {
               </Button>
               <Button className="cta-glow" onClick={() => navigate('/game')}>
                 Health Quiz Game
+              </Button>
+              {/* Emergency Numbers Button */}
+              <Button className="cta-glow bg-red-500 hover:bg-red-600 text-white" onClick={() => navigate('/emergency')}>
+                <Phone className="w-5 h-5 mr-2" /> Emergency Numbers
               </Button>
             </div>
           </div>
@@ -160,6 +163,7 @@ const Index = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Feature Cards */}
           <Card className="glass p-8 text-center hover:shadow-xl transition-all hover:-translate-y-2">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">🌍</span>
