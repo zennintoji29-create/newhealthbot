@@ -132,6 +132,14 @@ const MythBuster = ({ selectedLanguage }: Props) => {
         )}
         <div ref={chatEndRef} />
       </Card>
+{isTyping && (
+  <div className="text-gray-500 flex items-center gap-2 mb-2">
+    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+    Bot is typing...
+  </div>
+)}
 
       {/* Input */}
       <div className="flex gap-2">
