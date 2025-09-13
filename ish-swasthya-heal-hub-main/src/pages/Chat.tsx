@@ -197,6 +197,77 @@ const Chat = () => {
             <option value="or">Odia</option>
           </select>
         </div>
+// Input + Upload + Send
+<div className="flex gap-2 items-center">
+  <Input
+    placeholder="Type your health question..."
+    value={inputMessage}
+    onChange={(e) => setInputMessage(e.target.value)}
+    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+    className="flex-1"
+  />
+  
+  {/* Image Upload */}
+  <label>
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Show preview immediately
+        const imageMessage: Message = {
+          id: Date.now().toString(),
+          type: "image",
+          timestamp: new Date(),
+          imageUrl: URL.createObjectURL(file),
+        };
+        setMessages((prev) => [...prev, imageMessage]);
+
+        setIsTyping(true);
+        try {
+          const formData = new FormData();
+          formData.append("image", file);
+          formData.append("lang", selectedLanguage);
+
+          const res = await fetch(`${API_URL}/analyze-image`, {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: data.advice || "Unable to process the image.",
+            type: "bot",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, botMessage]);
+        } catch (err) {
+          console.error("Image upload error:", err);
+          const botMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            text: "Error processing the image.",
+            type: "bot",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, botMessage]);
+        } finally {
+          setIsTyping(false);
+        }
+      }}
+    />
+    <Button size="icon">
+      <UploadCloud className="h-4 w-4" />
+    </Button>
+  </label>
+
+  <Button onClick={sendMessage} size="icon">
+    <Send className="h-4 w-4" />
+  </Button>
+</div>
 
         {/* Chat Messages */}
         <Card className="mb-6 p-6 h-96 overflow-y-auto bg-card/80 backdrop-blur-sm">
